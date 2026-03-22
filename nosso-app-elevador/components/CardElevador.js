@@ -3,8 +3,19 @@ import { View, Text, StyleSheet } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 
 export default function CardElevador({ nome, andarAtual, status, ocupado, destino, progresso }) {
+  const borderColorByNome = {
+    'Elevador A': '#ED145B',
+    'Elevador B': '#05FF00',
+    'Elevador C': '#FF8A00',
+    'Elevador D': '#0B81FF',
+    'Elevador E': '#8E2FFF',
+    'Elevador F': '#FFD500',
+    'Elevador G': '#00BFA5',
+    'Elevador H': '#FF267F',
+  };
+
   return (
-    <View style={styles.card}>
+    <View style={[styles.card, { borderLeftColor: borderColorByNome[nome] || '#ED145B' }]}>
       <View>
         <Text style={styles.nome}>{nome}</Text>
         <Text style={styles.subtitulo}>Status: {status}</Text>
@@ -17,7 +28,7 @@ export default function CardElevador({ nome, andarAtual, status, ocupado, destin
           <View style={styles.progressoContainer}>
             <View style={styles.progressoBarra}>
               <LinearGradient
-                colors={['#ED145B', '#00A859']} // Rosa para verde
+                colors={['#05FF00', '#ED145B']} // Verde para rosa
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 0 }}
                 style={[styles.progressoFill, { width: `${progresso}%` }]}

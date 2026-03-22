@@ -33,14 +33,21 @@ export default function LocalizarElevador() {
   useEffect(() => {
     if (!carregando) {
       const gerarPedido = () => {
-        let andar;
-        do {
-          andar = Math.floor(Math.random() * 10) + 1; // 1 a 10
-        } while (elevadores.some(e => !e.ocupado && e.andarAtual === andar));
-        setPedidos(prev => [...prev, andar]);
+        const numPedidos = Math.floor(Math.random() * 4) + 2; // 2 a 5 pedidos
+        const novosPedidos = [];
+
+        for (let i = 0; i < numPedidos; i++) {
+          let andar;
+          do {
+            andar = Math.floor(Math.random() * 10) + 1; // 1 a 10
+          } while (elevadores.some(e => !e.ocupado && e.andarAtual === andar));
+          novosPedidos.push(andar);
+        }
+
+        setPedidos(prev => [...prev, ...novosPedidos]);
       };
 
-      const interval = setInterval(gerarPedido, Math.random() * 5000 + 5000); // 5-10s
+      const interval = setInterval(gerarPedido, Math.random() * 3000 + 2000); // 2-5s para fluxo mais contínuo
       return () => clearInterval(interval);
     }
   }, [carregando, elevadores]);
@@ -48,122 +55,130 @@ export default function LocalizarElevador() {
   // Lógica de despacho de elevadores
   useEffect(() => {
     if (!carregando && pedidos.length > 0) {
+      // Trabalha com uma fila de pedidos e remove somente os atendidos.
+      let pedidosRestantes = [...pedidos];
+
       setElevadores(prevElevadores => {
         const novosElevadores = [...prevElevadores];
-        const pedidosRestantes = [...pedidos];
 
-        // Escolher aleatoriamente 1 a 4 elevadores para despachar simultaneamente
-        const numDespachar = Math.min(Math.floor(Math.random() * 4) + 1, pedidosRestantes.length);
+        // Fila de despacho: escolher entre 2 e 5 pedidos por ciclo, limitado ao tamanho da fila
+        const numDespachar = Math.min(Math.floor(Math.random() * 4) + 2, pedidosRestantes.length);
 
         for (let i = 0; i < numDespachar; i++) {
           const destino = pedidosRestantes.shift();
 
-          // Encontrar elevadores livres
+          // Encontrar elevadores livres (mesmo com outros em jornada em paralelo)
           const livres = novosElevadores.filter(e => !e.ocupado);
 
-          if (livres.length > 0) {
-            // Evita elevação exata: não chama elevador livre que já está no andar pedido
-            let candidatos = livres.filter(e => e.andarAtual !== destino);
-            if (candidatos.length === 0) {
-              // Se não houver outro disponível, mantém todos (fallback)
-              candidatos = livres;
-            }
+          if (livres.length === 0) {
+            // Sem elevador livre no momento, mantém o pedido na fila
+            pedidosRestantes.unshift(destino);
+            break;
+          }
 
-            // Escolher o mais próximo do destino; em caso de empate, priorizar o menor andar (mais próximo do solo)
-            let melhor = null;
-            let menorDistancia = Infinity;
-            let menorAndar = Infinity;
+          let candidatos = livres.filter(e => e.andarAtual !== destino);
+          if (candidatos.length === 0) {
+            candidatos = livres;
+          }
 
-            candidatos.forEach(elevador => {
-              const distancia = Math.abs(destino - elevador.andarAtual);
-              if (
-                distancia < menorDistancia ||
-                (distancia === menorDistancia && elevador.andarAtual < menorAndar)
-              ) {
-                menorDistancia = distancia;
-                menorAndar = elevador.andarAtual;
-                melhor = elevador;
-              }
-            });
+          const distancias = candidatos.map(elevador => ({
+            elevador,
+            distancia: Math.abs(destino - elevador.andarAtual),
+          }));
 
-            if (melhor) {
-              const distancia = Math.abs(destino - melhor.andarAtual);
-              const tempoParada = 5000;
+          const menorDistancia = Math.min(...distancias.map(item => item.distancia));
+          const melhores = distancias
+            .filter(item => item.distancia === menorDistancia)
+            .map(item => item.elevador);
 
-              // Marcar como ocupado
-              melhor.ocupado = true;
-              melhor.destino = destino;
-              melhor.status = destino > melhor.andarAtual ? 'Subindo' : destino < melhor.andarAtual ? 'Descendo' : 'Parado';
+          const melhor = melhores[Math.floor(Math.random() * melhores.length)];
 
-              if (distancia === 0) {
-                // Mesmo andar: não precisa se mover, apenas aguarda para liberar
-                setTimeout(() => {
+          if (!melhor) {
+            pedidosRestantes.unshift(destino);
+            continue;
+          }
+
+          const distancia = Math.abs(destino - melhor.andarAtual);
+          const tempoParada = 5000;
+
+          melhor.ocupado = true;
+          melhor.destino = destino;
+          melhor.status = destino > melhor.andarAtual ? 'Subindo' : destino < melhor.andarAtual ? 'Descendo' : 'Parado';
+
+          if (distancia === 0) {
+            setTimeout(() => {
+              setElevadores(prev =>
+                prev.map(e =>
+                  e.id === melhor.id
+                    ? { ...e, ocupado: false, destino: null, status: 'Parado' }
+                    : e
+                )
+              );
+            }, tempoParada);
+          } else {
+            const step = destino > melhor.andarAtual ? 1 : -1;
+
+            const moverUmAndar = (andarAtual) => {
+              const proximoAndar = andarAtual + step;
+              let progressoInterval;
+              let progresso = 0;
+
+              progressoInterval = setInterval(() => {
+                progresso += 5;
+                setElevadores(prev =>
+                  prev.map(e =>
+                    e.id === melhor.id
+                      ? { ...e, progresso }
+                      : e
+                  )
+                );
+                if (progresso >= 100) {
+                  clearInterval(progressoInterval);
+                }
+              }, 100);
+
+              setTimeout(() => {
+                clearInterval(progressoInterval);
+                setElevadores(prev =>
+                  prev.map(e =>
+                    e.id === melhor.id
+                      ? { ...e, andarAtual: proximoAndar, status: step > 0 ? 'Subindo' : 'Descendo', progresso: 0 }
+                      : e
+                  )
+                );
+
+                if (proximoAndar !== destino) {
+                  setTimeout(() => moverUmAndar(proximoAndar), 0);
+                } else {
                   setElevadores(prev =>
                     prev.map(e =>
                       e.id === melhor.id
-                        ? { ...e, ocupado: false, destino: null, status: 'Parado' }
+                        ? { ...e, status: 'Cheguei!', progresso: 0 }
                         : e
                     )
                   );
-                }, tempoParada);
-              } else {
-                const step = destino > melhor.andarAtual ? 1 : -1;
-
-                const moverUmAndar = (andarAtual) => {
-                  const proximoAndar = andarAtual + step;
-                  let progressoInterval;
-
-                  // Iniciar progresso
-                  let progresso = 0;
-                  progressoInterval = setInterval(() => {
-                    progresso += 5; // 5% a cada 100ms, total 2s
-                    setElevadores(prev =>
-                      prev.map(e =>
-                        e.id === melhor.id
-                          ? { ...e, progresso: progresso }
-                          : e
-                      )
-                    );
-                    if (progresso >= 100) {
-                      clearInterval(progressoInterval);
-                    }
-                  }, 100);
 
                   setTimeout(() => {
-                    clearInterval(progressoInterval);
                     setElevadores(prev =>
                       prev.map(e =>
                         e.id === melhor.id
-                          ? { ...e, andarAtual: proximoAndar, status: step > 0 ? 'Subindo' : 'Descendo', progresso: 0 }
+                          ? { ...e, ocupado: false, destino: null, status: 'Parado', progresso: 0 }
                           : e
                       )
                     );
+                  }, tempoParada);
+                }
+              }, 2000);
+            };
 
-                    if (proximoAndar !== destino) {
-                      setTimeout(() => moverUmAndar(proximoAndar), 0);
-                    } else {
-                      // Chegou no destino
-                      setTimeout(() => {
-                        setElevadores(prev =>
-                          prev.map(e =>
-                            e.id === melhor.id
-                              ? { ...e, ocupado: false, destino: null, status: 'Parado', progresso: 0 }
-                              : e
-                          )
-                        );
-                      }, tempoParada);
-                    }
-                  }, 2000);
-                };
-
-                setTimeout(() => moverUmAndar(melhor.andarAtual), 0);
-              }
-            }
+            setTimeout(() => moverUmAndar(melhor.andarAtual), 0);
           }
         }
 
         return novosElevadores;
       });
+
+      setPedidos(pedidosRestantes);
     }
   }, [carregando, pedidos]);
 
