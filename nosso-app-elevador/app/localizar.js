@@ -22,10 +22,13 @@ export default function LocalizarElevador() {
 
   // Dados iniciais dos elevadores
   const inicializarElevadores = () => [
-    { id: '1', nome: 'Elevador A', andares: gerarAndaresAleatorios(), status: 'Parado', andarAtual: 1, indiceAtual: 0 },
-    { id: '2', nome: 'Elevador B', andares: gerarAndaresAleatorios(), status: 'Parado', andarAtual: 1, indiceAtual: 0 },
-    { id: '3', nome: 'Elevador C', andares: gerarAndaresAleatorios(), status: 'Parado', andarAtual: 1, indiceAtual: 0 },
-  ];
+    { id: '1', nome: 'Elevador A', andares: gerarAndaresAleatorios(), status: 'Parado', andarAtual: 1 },
+    { id: '2', nome: 'Elevador B', andares: gerarAndaresAleatorios(), status: 'Parado', andarAtual: 1 },
+    { id: '3', nome: 'Elevador C', andares: gerarAndaresAleatorios(), status: 'Parado', andarAtual: 1 },
+  ].map(elevador => ({
+    ...elevador,
+    andarAtual: elevador.andares[0] || 1, // Andar atual é o primeiro da lista
+  }));
 
   // Simulação de carregamento de dados
   useEffect(() => {
@@ -35,30 +38,6 @@ export default function LocalizarElevador() {
     }, 2000);
     return () => clearTimeout(timer);
   }, []);
-
-  // Simulação de movimento em tempo real
-  useEffect(() => {
-    if (!carregando) {
-      const interval = setInterval(() => {
-        setElevadores(prevElevadores =>
-          prevElevadores.map(elevador => {
-            const { andares, indiceAtual, andarAtual } = elevador;
-            const proximoIndice = (indiceAtual + 1) % andares.length;
-            const proximoAndar = andares[proximoIndice];
-            const status = proximoAndar > andarAtual ? 'Subindo' : proximoAndar < andarAtual ? 'Descendo' : 'Parado';
-            return {
-              ...elevador,
-              andarAtual: proximoAndar,
-              indiceAtual: proximoIndice,
-              status,
-            };
-          })
-        );
-      }, 3000); // Atualiza a cada 3 segundos
-
-      return () => clearInterval(interval);
-    }
-  }, [carregando]);
 
   return (
     <View style={styles.container}>
