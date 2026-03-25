@@ -10,7 +10,7 @@
 
 Esta aplicação React Native/Expo simula um sistema inteligente de elevadores com 8 unidades, implementando algoritmos de dispatch otimizados, interface visual rica e processamento paralelo de chamadas. O projeto demonstra conceitos avançados de gerenciamento de estado, animações e lógica de negócio em aplicações móveis.
 
-**Baseado na cópia de:** [fiap-2ccpw-cp1-elevadores-fiap](https://github.com/robertomoreira/fiap-2ccpw-cp1-elevadores-fiap) por Roberto Moreira
+**Baseado na cópia de:** [fiap-2ccpw-cp1-elevadores-fiap](https://github.com/robertomoreira/fiap-2ccpw-cp1-elevadores-fiap) 
 
 ## ✨ Funcionalidades Principais
 
@@ -142,6 +142,13 @@ const escolhido = melhores[Math.floor(Math.random() * melhores.length)];
 - [x] Desempate randômico para seleção de elevadores
 - [x] Geração de 2-5 pedidos por ciclo
 - [x] Chamadas simultâneas de 2-5 elevadores
+
+
+
+
+
+<img width="615" height="900" alt="image" src="https://github.com/user-attachments/assets/7a0ebfb4-2da5-4386-b8c8-d12a671e1748" />
+
 
 ## 👨‍💻 Autores
 
