@@ -134,8 +134,7 @@ nosso-app-elevador/
 
 ### VÍDEO DE DEMOSNTRAÇÃO
 
-
-![Demonstração do App](./nosso-app-elevador/img/demonstracaogif.gif)
+![Demonstração do App](./nosso-app-elevador/app/img/demonstracaogif.gif)
 
 ## 🔧 Arquitetura e Algoritmos
 
