@@ -136,26 +136,6 @@ nosso-app-elevador/
 
 ![Demonstração do App](./nosso-app-elevador/app/img/demonstracaogif.gif)
 
-## 🔧 Arquitetura e Algoritmos
-
-### Algoritmo de Dispatch
-```javascript
-// 1. Filtrar elevadores livres
-const livres = elevadores.filter(e => !e.ocupado);
-
-// 2. Calcular distâncias para o destino
-const distancias = livres.map(e => ({
-  elevador: e,
-  distancia: Math.abs(destino - e.andarAtual)
-}));
-
-// 3. Selecionar menor distância
-const menorDistancia = Math.min(...distancias.map(d => d.distancia));
-
-// 4. Desempate randômico entre candidatos
-const melhores = distancias.filter(d => d.distancia === menorDistancia);
-const escolhido = melhores[Math.floor(Math.random() * melhores.length)];
-```
 ## 📋d) Decisões Técnicas
 **HOOKs**
 **OPÇÃO Agendar Elevador**: 
@@ -179,6 +159,26 @@ useEffect(() => {
   if (elevador) { setMensagem(`Elevador ${elevador} agendado!`); }
 }, [elevador]);
 ```
+
+### Algoritmo de Dispatch
+```javascript
+// 1. Filtrar elevadores livres
+const livres = elevadores.filter(e => !e.ocupado);
+
+// 2. Calcular distâncias para o destino
+const distancias = livres.map(e => ({
+  elevador: e,
+  distancia: Math.abs(destino - e.andarAtual)
+}));
+
+// 3. Selecionar menor distância
+const menorDistancia = Math.min(...distancias.map(d => d.distancia));
+
+// 4. Desempate randômico entre candidatos
+const melhores = distancias.filter(d => d.distancia === menorDistancia);
+const escolhido = melhores[Math.floor(Math.random() * melhores.length)];
+```
+
 ## 📋e) Próximos Passos
 - Implementar o cancelamento de agendamento
 - Fazer uma integração API dos elevadores.
